@@ -1,1 +1,505 @@
+```{r}
+library(readr)  
+library(dplyr)     
+library(zoo)
+library(forcats)
+```
+
+```{r}
+#Splitting Train and Test datasets
+#TRAINING SET
+
+loan.train <- read.csv("/Users/mohammedwasimrd/Desktop/DPA/loan_train1.csv")
+head(loan.train)
+
+col_types = cols(Credit_History = col_factor(levels = c("0", "1", "Missing")),
+CNT_FAM_MEMBERS = col_factor(levels = c("0", "1", "2", "3+", "Missing")),
+NAME_EDUCATION_TYPE = col_factor(levels = c("Graduate", "Not Graduate", "Missing")),
+CODE_GENDER = col_factor(levels = c("Male", "Female", "Missing")),
+Loan_Status = col_factor(levels = c("Y", "N")),
+NAME_FAMILY_STATUS = col_factor(levels = c("Yes", "No", "Missing")),
+LANDAREA_MEDI = col_factor(levels = c("Urban", "Semiurban", "Rural", "Missing")),
+NAME_INCOME_TYPE = col_factor(levels = c("No", "Yes", "Missing")),
+MONTHS_LAST_DUE = col_factor(levels = c('6', '12',  '36',  '60',  '84', '120', '180', '240', '300', '350', '360', '480', "Missing")))
+str(loan.train)
+```
+
+```{r}
+#TEST SET
+
+loan.test <- read.csv("/Users/mohammedwasimrd/Desktop/DPA/loan_test1.csv")
+head(loan.test)
+col_types = cols(Credit_History = col_factor(levels = c("0", "1", "Missing")),
+CNT_FAM_MEMBERS = col_factor(levels = c("0", "1", "2", "3+", "Missing")),
+NAME_EDUCATION_TYPE = col_factor(levels = c("Graduate", "Not Graduate", "Missing")),
+CODE_GENDER = col_factor(levels = c("Male", "Female", "Missing")),
+NAME_FAMILY_STATUS = col_factor(levels = c("Yes", "No", "Missing")),
+LANDAREA_MEDI = col_factor(levels = c("Urban", "Semiurban", "Rural", "Missing")),
+NAME_INCOME_TYPE = col_factor(levels = c("No", "Yes", "Missing")),
+MONTHS_LAST_DUE = col_factor(levels = c('6', '12',  '36',  '60',  '84', '120', '180', '240', '300', '350', '360', '480', "Missing")))
+str(loan.test)
+```
+
+
+```{r}
+loan.train$CODE_GENDER <- fct_explicit_na(loan.train$CODE_GENDER, na_level = 'Missing')
+loan.train$NAME_FAMILY_STATUS <- fct_explicit_na(loan.train$NAME_FAMILY_STATUS, na_level = 'Missing')
+loan.train$CNT_FAM_MEMBERS <- fct_explicit_na(loan.train$CNT_FAM_MEMBERS, na_level = 'Missing')
+loan.train$NAME_EDUCATION_TYPE <- fct_explicit_na(loan.train$NAME_EDUCATION_TYPE, na_level = 'Missing')
+loan.train$NAME_INCOME_TYPE <- fct_explicit_na(loan.train$NAME_INCOME_TYPE, na_level = 'Missing')
+#loan.train$MONTHS_LAST_DUE <- fct_explicit_na(loan.train$MONTHS_LAST_DUE, na_level = 'Missing')
+#loan.train$Credit_History <- fct_explicit_na(loan.train$Credit_History, na_level = 'Missing')
+loan.train$LANDAREA_MEDI <- fct_explicit_na(loan.train$LANDAREA_MEDI, na_level = 'Missing')
+loan.train$AMT_CREDIT <- na.aggregate(loan.train$AMT_CREDIT)
+loan.test$CODE_GENDER <- fct_explicit_na(loan.test$CODE_GENDER, na_level = 'Missing')
+loan.test$NAME_FAMILY_STATUS <- fct_explicit_na(loan.test$NAME_FAMILY_STATUS, na_level = 'Missing')
+loan.test$CNT_FAM_MEMBERS <- fct_explicit_na(loan.test$CNT_FAM_MEMBERS, na_level = 'Missing')
+loan.test$NAME_EDUCATION_TYPE <- fct_explicit_na(loan.test$NAME_EDUCATION_TYPE, na_level = 'Missing')
+loan.test$NAME_INCOME_TYPE <- fct_explicit_na(loan.test$NAME_INCOME_TYPE, na_level = 'Missing')
+#loan.test$MONTHS_LAST_DUE <- fct_explicit_na(loan.test$MONTHS_LAST_DUE, na_level = 'Missing')
+#loan.test$Credit_History <- fct_explicit_na(loan.test$Credit_History, na_level = 'Missing')
+loan.test$LANDAREA_MEDI <- fct_explicit_na(loan.test$LANDAREA_MEDI, na_level = 'Missing')
+```
+
+
+```{r}
+summary(loan.train)
+```
+
+
+```{r}
+summary(loan.test)
+```
+
+
+```{r}
+library(ggplot2)
+
+Loan_Status.labs <- c("approved", "not approved")
+names(Loan_Status.labs) <- c('Y', 'N')
+```
+
+
+```{r}
+design <- theme_minimal() +                   
+     theme(axis.title = element_blank(), 
+           axis.text = element_blank(),
+           axis.ticks.x = element_blank(),
+           strip.text.x = element_text(size = 8, angle = 45),
+           plot.title = element_text(hjust = 0.5, face = 'bold'),
+           plot.subtitle = element_text(hjust = 0.5))
+```
+
+
+```{r}
+plot.CODE_GENDER <- ggplot(loan.train, aes(x = CODE_GENDER,fill = CODE_GENDER)) +
+     geom_bar() +
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Gender', subtitle = 'Credit') +
+     design
+plot(plot.CODE_GENDER)
+```
+
+
+```{r}
+plot.CNT_FAM_MEMBERS <- ggplot(loan.train, aes(x = CNT_FAM_MEMBERS, fill = CNT_FAM_MEMBERS)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Dependents', subtitle = 'Credit') +
+     design
+plot(plot.CNT_FAM_MEMBERS)
+```
+
+
+```{r}
+plot.NAME_EDUCATION_TYPE <- ggplot(loan.train, aes(x = NAME_EDUCATION_TYPE, fill = NAME_EDUCATION_TYPE)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Education', subtitle = 'Credit') +
+     design
+```
+
+
+```{r}
+plot.NAME_FAMILY_STATUS <- ggplot(loan.train, aes(x = NAME_fAMILY_STATUS, fill = NAME_FAMILY_STATUS)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Married', subtitle = 'Credit') +
+     design
+```
+
+
+```{r}
+plot.LANDAREA_MEDI <- ggplot(loan.train, aes(x = LANDAREA_MEDI, fill = LANDAREA_MEDI)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Property area', subtitle = 'Credit') +
+     design
+```
+
+
+```{r}
+plot.NAME_INCOME_TYPE <- ggplot(loan.train, aes(x =NAME_INCOME_TYPE, fill = NAME_INCOME_TYPE)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Self employeed', subtitle = 'credit') +
+     design
+```
+
+
+```{r}
+plot.credit <- ggplot(loan.train, aes(x = Credit_History, fill = Credit_History)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', breaks = c(0, 1), labels = c('No', 'Yes'), name = '') +
+     ggtitle('Credit history', subtitle = 'Credit') +
+     design
+```
+
+
+```{r}
+plot.AMT_INCOME_TOTAL <- ggplot(loan.train, aes(x = AMT_INCOME_TOTAL, fill = Loan_Status)) +
+     geom_histogram(bins=30) + 
+     scale_fill_brewer(palette = 'Dark2', labels = c('Yes', 'No'), name = 'Credit') +
+     theme_minimal() +
+     ggtitle('Applicant income') +
+     labs(x = '$') +
+     theme(axis.title.y = element_blank(),
+                axis.text.y = element_blank(),
+                plot.title = element_text(hjust = 0.5, face = 'bold'))
+```
+
+
+```{r}
+plot.MONTHS_LAST_DUE <- ggplot(loan.train, aes(x = MONTHS_LAST_DUE, fill = Loan_Status)) +
+     geom_bar() +
+     scale_fill_brewer(palette = 'Dark2', labels = c('Yes', 'No'), name = 'Credit') +
+     ggtitle('Loan amount term') +
+     labs(x = 'Amount of months') +
+     theme_minimal() +
+     theme(axis.title.y = element_blank(),
+                axis.text.y = element_blank(),
+                plot.title = element_text(hjust = 0.5, face = 'bold'))
+```
+
+
+```{r}
+plot.AMT_ANNUITY <- ggplot(loan.train, aes(x = AMT_ANNUITY, fill = Loan_Status)) +
+     geom_histogram(bins=30) + 
+     scale_fill_brewer(palette = 'Dark2', labels = c('Yes', 'No'), name = 'Credit') +
+     theme_minimal() +
+     ggtitle('Coapplicant income') +
+     labs(x = '$') +
+     theme(axis.title.y = element_blank(),
+                axis.text.y = element_blank(),
+                plot.title = element_text(hjust = 0.5, face = 'bold'),
+                axis.text.x = element_text(angle = 45))
+```
+
+
+```{r}
+plot.AMT_CREDIT <- ggplot(loan.train, aes(x = AMT_CREDIT, fill = Loan_Status)) +
+     geom_histogram(bins=30) + 
+     scale_fill_brewer(palette = 'Dark2', labels = c('Yes', 'No'), name = 'Credit') +
+     theme_minimal() +
+     ggtitle('Amount of loan') +
+     labs(x = 'K $') +
+     theme(axis.title.y = element_blank(),
+                axis.text.y = element_blank(),
+                plot.title = element_text(hjust = 0.5, face = 'bold'))
+```
+
+
+```{r}
+library(gridExtra)
+
+plot.NAME_FAMILY_STATUS <- ggplot(loan.train, aes(x = NAME_FAMILY_STATUS, fill = NAME_FAMILY_STATUS)) +
+     geom_bar() + 
+     facet_grid(~Loan_Status, labeller = labeller(Loan_Status = Loan_Status.labs)) +
+     scale_fill_brewer(palette = 'Dark2', name = '') +
+     ggtitle('Married', subtitle = 'Credit') +
+     design
+grid.arrange(plot.CODE_GENDER, plot.NAME_FAMILY_STATUS, plot.NAME_EDUCATION_TYPE, plot.CNT_FAM_MEMBERS, ncol = 2)
+grid.arrange(plot.AMT_INCOME_TOTAL, plot.AMT_ANNUITY, plot.AMT_CREDIT, plot.MONTHS_LAST_DUE, ncol = 2)
+grid.arrange(plot.LANDAREA_MEDI, plot.NAME_INCOME_TYPE, plot.credit, ncol = 2)
+```
+
+
+```{r}
+library(caret)
+library(ggplot2)
+library(lattice)
+set.seed(111)
+divide = sample(2, nrow(loan.train), replace = TRUE, prob = c(0.75, 0.25))
+loan.train.train <- loan.train[divide == 1, ] 
+loan.train.test <- loan.train[divide == 2, ] 
+
+head(loan.train.train)
+```
+```{r}
+loan.train.train$Loan_Status<-as.factor(loan.train.train$Loan_Status)
+head(loan.train.train$Loan_Status)
+
+```
+
+```{r}
+library(party)
+tree <- ctree(Loan_Status ~. ,data = loan.train.train)
+plot(tree)
+```
+
+
+```{r}
+confusionMatrix(predict(tree), loan.train.train$Loan_Status, positive = "Y")
+```
+
+
+```{r}
+pred_tree = predict(tree, newdata = loan.train.test)
+confusionMatrix(pred_tree, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+
+
+```{r}
+test_score <- function(x, loop = FALSE) {
+     if (loop == TRUE) {
+         pred_x <- predict(x, newdata = loan.train.test)
+         cf.2 <- confusionMatrix(pred_x, loan.train.test$Loan_Status, positive = "Y")
+         score <- (data.frame(acc = cf.2$overall[['Accuracy']],
+                              sens = cf.2$byClass[['Sensitivity']],
+                              spec = cf.2$byClass[['Specificity']],
+                              i = i,
+                              j = j))}
+     if (loop == FALSE) { 
+         pred_x <- predict(x, newdata = loan.train.test)
+         cf.2 <- confusionMatrix(pred_x, loan.train.test$Loan_Status, positive = "Y")
+         score <- (data.frame(acc = cf.2$overall[['Accuracy']],
+                              sens = cf.2$byClass[['Sensitivity']],
+                              spec = cf.2$byClass[['Specificity']]))
+         
+     }
+     return(score)          
+ }
+```
+
+
+```{r}
+loan.train.train$Loan_Status<-as.factor(loan.train.train$Loan_Status)
+head(loan.train.train$Loan_Status)
+```
+
+```{r}
+df <- data.frame(acc = NULL,sens = NULL,spec = NULL, i = NULL,j = NULL)  #empty dataframe
+for (i in 1:20) {
+     for (j in 1:20) {
+         tree_w <- ctree(Loan_Status ~., data = loan.train.train, weights = ifelse(loan.train.train$Loan_Status == 'Y', i, j))
+         df <- rbind(df,test_score(tree_w, loop = TRUE))
+     }
+ }
+df[df$acc == max(df$acc),]
+```
+
+
+```{r}
+tree_w <- ctree(Loan_Status ~ ., data = loan.train.train, weights = ifelse(loan.train.train$Loan_Status == 'Y', 3, 4))
+pred_tree_w <- predict(tree_w, newdata = loan.train.test)
+confusionMatrix(pred_tree_w, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+
+
+```{r}
+ ## Random forests
+ #### Training dataset, the number of trees is set to 200.
+
+forest <- cforest(Loan_Status ~ ., data = loan.train.train, control = cforest_unbiased(ntree = 200))
+confusionMatrix(predict(forest), loan.train.train$Loan_Status)
+```
+
+
+```{r}
+pred_forest = predict(forest, newdata = loan.train.test)
+confusionMatrix(pred_forest, as.factor(loan.train.test$Loan_Status), positive = "Y")
+                
+#confusionMatrix(pred_tree_w, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+
+
+```{r}
+df <- data.frame(acc = NULL,sens = NULL,spec = NULL, i = NULL,j = NULL)
+for (i in 1:10) {
+     for (j in 1:10) {
+         forest_w <- cforest(Loan_Status ~., data = loan.train.train, control = cforest_unbiased(ntree = 200), weights = ifelse(loan.train.train$Loan_Status == 'Y', i, j))
+         df <- rbind(df, test_score(forest_w, TRUE))
+     }
+ }
+head(df[df$acc == max(df$acc),])
+```
+
+
+```{r}
+forest_w <- cforest(Loan_Status ~ ., data = loan.train.train, control = cforest_unbiased(ntree = 200), weights = ifelse(loan.train.train$Loan_Status == 'Y', 1, 8))
+pred_forest_w = predict(forest_w, newdata = loan.train.test)
+confusionMatrix(pred_forest_w, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+
+
+```{r}
+#test_score(forest_w)
+```
+
+
+```{r}
+## Bagging (Bootstrap aggregation)
+library(ipred)
+
+bag <- bagging(Loan_Status ~ ., data = loan.train.train, nbagg = 2000)
+pred_bag <- predict(bag, newdata = loan.train.test)
+confusionMatrix(pred_bag, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+
+
+```{r}
+### Bagging with OOB (out of box) error
+bag2 <- bagging(Loan_Status ~ ., data = loan.train.train, coob = TRUE, nbagg = 2000) 
+pred_bag2 <- predict(bag2, newdata = loan.train.test)
+confusionMatrix(pred_bag2, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+
+
+```{r}
+## Support Vector Machine
+library(e1071)
+cc1 <- svm(Loan_Status ~ ., data = loan.train.train, type = 'C-classification', kernel = "radial") 
+cc2 <- svm(Loan_Status ~ ., data = loan.train.train, type = 'C-classification', kernel = "sigmoid") 
+cc3 <- svm(Loan_Status ~ ., data = loan.train.train, type = 'C-classification', kernel = "polynomial") 
+test_score(cc1)
+```
+
+```{r}
+test_score(cc2)
+```
+
+```{r}
+test_score(cc3)
+```
+
+
+```{r}
+nuc1 <- svm(Loan_Status ~ ., data = loan.train.train, type = 'nu-classification', kernel = "radial") 
+nuc2 <- svm(Loan_Status ~ ., data = loan.train.train, type = 'nu-classification', kernel = "sigmoid") 
+nuc3 <- svm(Loan_Status ~ ., data = loan.train.train, type = 'nu-classification', kernel = "polynomial")
+```
+
+
+```{r}
+test_score(nuc1)
+```
+
+```{r}
+test_score(nuc2)
+```
+
+```{r}
+test_score(nuc3)
+```
+
+```{r}
+pred_svm <- predict(nuc1, newdata = loan.train.test)
+confusionMatrix(pred_svm, as.factor(loan.train.test$Loan_Status), positive = "Y")
+```
+```{r}
+ ## Naive Bayes Classifier 
+library(e1071)
+bayes <- naiveBayes(Loan_Status ~ ., data = loan.train.train)
+test_score(bayes)
+```
+```{r}
+df <- data.frame(acc = NULL,sens = NULL,spec = NULL, i = NULL,j = NULL)
+for (i in 0:20) {
+     bay <- naiveBayes(Loan_Status ~ ., data = loan.train.train, laplace = i)
+     df <- rbind(df, test_score(bay, TRUE))
+ }
+```
+
+```{r}
+ggplot(df, aes(x = i, y = acc)) +
+     geom_line(color = '#1B9E77') +
+     theme_minimal() +
+     scale_x_continuous(breaks = c(0:20)) +
+     geom_vline(xintercept = df[df$acc == max(df$acc),]$i, lty = 1, color = "#D95F02")
+```
+
+
+```{r}
+bayes <- naiveBayes(Loan_Status ~ ., data = loan.train.train)
+pred_bayes <- predict(bayes, newdata = loan.train.test)
+confusionMatrix(pred_bayes, loan.train.test$Loan_Status, positive = "Y")
+```
+
+
+```{r}
+library(pROC)
+
+plot(roc(as.ordered(pred_tree_w), as.ordered(loan.train.test$Loan_Status)), col = "#1B9E77", main = 'ROC curve' )
+roc(as.ordered(pred_forest), as.ordered(loan.train.test$Loan_Status), plot = TRUE, add = TRUE, col = "#D95F02")
+roc(as.ordered(pred_bag2), as.ordered(loan.train.test$Loan_Status), plot = TRUE, add = TRUE, col = "#7570B3" )
+roc(as.ordered(pred_svm), as.ordered(loan.train.test$Loan_Status), plot = TRUE, add = TRUE, col = "#E7298A")
+roc(as.ordered(pred_bayes), as.ordered(loan.train.test$Loan_Status), plot = TRUE, add = TRUE, col = "#66A61E")
+legend("bottomright", legend = c('Weighted tree classifier', 'Random forest', 'Bagging', 'SVM method', 'Naive Bayes'),
+        col = c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E"),
+        lty = 1,
+        lwd = 2,
+        box.lty = 0)
+```
+
+
+```{r}
+df <- rbind(test_score(tree_w),
+             test_score(forest),
+             test_score(bag2),
+             test_score(nuc1),
+             test_score(bayes))
+df
+```
+
+
+```{r}
+library(caret)
+pred_tree_w <- predict(tree_w, newdata = loan.test)
+pred_forest <- predict(forest, newdata = loan.test)
+pred_bag <- predict(bag2, newdata = loan.test)
+pred_svm <- predict(nuc1, newdata = loan.test)
+pred_bayes <- predict(bayes, newdata = loan.test)
+```
+
+
+```{r}
+tree <- data.frame('Loan_ID' = loan.test[,1], 'Loan_Status' = pred_tree_w)
+ forest <- data.frame('Loan_ID' = loan.test[,1], 'Loan_Status' = pred_forest)
+ bag <- data.frame('Loan_ID' = loan.test[,1], 'Loan_Status' = pred_bag)
+ svm <- data.frame('Loan_ID' = loan.test[,1], 'Loan_Status' = pred_svm)
+ bayes <- data.frame('Loan_ID' = loan.test[,1], 'Loan_Status' = pred_bayes)
+```
+
+
+```{r}
+write.csv(tree, file = 'tree.csv', row.names = FALSE)
+ write.csv(forest, file = 'forest.csv', row.names = FALSE)
+ write.csv(bag, file = 'bagging.csv', row.names = FALSE)
+ write.csv(svm, file = 'svm.csv', row.names = FALSE)
+ write.csv(bayes, file = 'bayes.csv', row.names = FALSE)
+```
+
+
+```{r}
+results <- data.frame('Weighted tree classifier' = 0.75, 'Random forest' = 0.78, 'Bagging' =  0.76, 'SVM method' = 0.77, 'Naive Bayes' =  0.75)
+results
+```
+
 
